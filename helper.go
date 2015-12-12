@@ -107,17 +107,20 @@ func extractParams(req *http.Request, mux *Mux) (bool, map[string]string) {
 	var ss = strings.Split(req.URL.Path, "/")
 	var params = make(map[string]string)
 	var r = mux.GetRequestRoute(req)
-
-	if r.Atts&REGEX != 0 {
-		for k, _ := range r.Compile {
-			params[r.Tag[k]] = ss[k]
+	if r != nil {
+		if r.Atts&REGEX != 0 {
+			for k, _ := range r.Compile {
+				params[r.Tag[k]] = ss[k]
+			}
 		}
-	}
 
-	for k, v := range r.Pattern {
-		params[v] = ss[k]
+		for k, v := range r.Pattern {
+			params[v] = ss[k]
+		}
+
+		return true, params
 	}
-	return true, params
+	return false, nil
 }
 
 // This function returns the route of given Request

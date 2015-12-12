@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-zoo/bone"
@@ -9,12 +10,14 @@ import (
 )
 
 func main() {
+	muxx := bone.New().Prefix("/api")
 	boneSub := bone.New()
 	gorrilaSub := mux.NewRouter()
 	httprouterSub := httprouter.New()
 
-	boneSub.GetFunc("/test", func(rw http.ResponseWriter, req *http.Request) {
-		rw.Write([]byte("Hello from bone mux"))
+	boneSub.GetFunc("/test/:var", func(rw http.ResponseWriter, req *http.Request) {
+		val := muxx.GetValue(req, "var")
+		rw.Write([]byte(fmt.Sprintf("Hello %s from bone mux", val)))
 	})
 
 	gorrilaSub.HandleFunc("/test", func(rw http.ResponseWriter, req *http.Request) {
@@ -24,8 +27,6 @@ func main() {
 	httprouterSub.GET("/test", func(rw http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 		rw.Write([]byte("Hello from httprouter mux"))
 	})
-
-	muxx := bone.New().Prefix("/api")
 
 	muxx.SubRoute("/bone", boneSub)
 	muxx.SubRoute("/gorilla", gorrilaSub)
