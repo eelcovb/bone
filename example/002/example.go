@@ -1,14 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/go-zoo/bone"
 )
 
+var mux = bone.New()
+
 func main() {
-	mux := bone.New()
 
 	mux.GetFunc("/", defaultHandler)
 	mux.GetFunc("/reg/#var^[a-z]$/#var2^[0-9]$", ShowVar)
@@ -24,5 +26,7 @@ func defaultHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func ShowVar(rw http.ResponseWriter, req *http.Request) {
-	rw.Write([]byte(bone.GetAllValues(req)["var"]))
+	value := mux.GetAllValues(req)
+	fmt.Println(value)
+	//rw.Write([]byte(value))
 }

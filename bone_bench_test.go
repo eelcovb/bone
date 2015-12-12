@@ -25,19 +25,20 @@ func BenchmarkBoneMux(b *testing.B) {
 
 	for n := 0; n < b.N; n++ {
 		muxx.ServeHTTP(response, request)
+		//muxx.GetAllValues(request)
 	}
 }
 
 // Test httprouter ns/op
 func BenchmarkHttpRouterMux(b *testing.B) {
-	request, _ := http.NewRequest("GET", "/sd", nil)
+	request, _ := http.NewRequest("GET", "/sd/var", nil)
 	response := httptest.NewRecorder()
 	muxx := httprouter.New()
 
 	muxx.Handler("GET", "/", http.HandlerFunc(Bench))
 	muxx.Handler("GET", "/a", http.HandlerFunc(Bench))
 	muxx.Handler("GET", "/aas", http.HandlerFunc(Bench))
-	muxx.Handler("GET", "/sd", http.HandlerFunc(Bench))
+	muxx.Handler("GET", "/sd/:var", http.HandlerFunc(Bench))
 
 	for n := 0; n < b.N; n++ {
 		muxx.ServeHTTP(response, request)

@@ -7,7 +7,10 @@
 
 package bone
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
 
 func (m *Mux) parse(rw http.ResponseWriter, req *http.Request) bool {
 	for _, r := range m.Routes[req.Method] {
@@ -23,9 +26,6 @@ func (m *Mux) parse(rw http.ResponseWriter, req *http.Request) bool {
 			}
 			if r.Match(req) {
 				r.Handler.ServeHTTP(rw, req)
-				vars.Lock()
-				delete(vars.v, req)
-				vars.Unlock()
 				return true
 			}
 		}
@@ -61,8 +61,7 @@ func (m *Mux) HandleNotFound(rw http.ResponseWriter, req *http.Request) {
 
 // Check if the path don't end with a /
 func (m *Mux) validate(rw http.ResponseWriter, req *http.Request) bool {
-	plen := len(req.URL.Path)
-	if plen > 1 && req.URL.Path[plen-1:] == "/" {
+	if len(req.URL.Path) > 1 && req.URL.Path[len(req.URL.Path)-1:] == "/" {
 		cleanURL(&req.URL.Path)
 		rw.Header().Set("Location", req.URL.Path)
 		rw.WriteHeader(http.StatusFound)
@@ -72,8 +71,7 @@ func (m *Mux) validate(rw http.ResponseWriter, req *http.Request) bool {
 }
 
 func valid(path string) bool {
-	plen := len(path)
-	if plen > 1 && path[plen-1:] == "/" {
+	if len(path) > 1 && path[len(path)-1:] == "/" {
 		return false
 	}
 	return true
@@ -81,59 +79,75 @@ func valid(path string) bool {
 
 // Clean url path
 func cleanURL(url *string) {
-	ulen := len((*url))
-	if ulen > 1 {
-		if (*url)[ulen-1:] == "/" {
-			*url = (*url)[:ulen-1]
+	if len((*url)) > 1 {
+		if (*url)[len((*url))-1:] == "/" {
+			*url = (*url)[:len((*url))-1]
 			cleanURL(url)
 		}
 	}
 }
 
 // GetValue return the key value, of the current *http.Request
-func GetValue(req *http.Request, key string) string {
-	vars.RLock()
-	value := vars.v[req][key]
-	vars.RUnlock()
-	return value
+func (m *Mux) GetValue(req *http.Request, key string) string {
+	if ok, value := extractParams(req, m); ok {
+		return value[key]
+	}
+	return ""
 }
 
 // GetAllValues return the req PARAMs
-func GetAllValues(req *http.Request) map[string]string {
-	vars.RLock()
-	values := vars.v[req]
-	vars.RUnlock()
-	return values
+func (m *Mux) GetAllValues(req *http.Request) map[string]string {
+	if ok, values := extractParams(req, m); ok {
+		return values
+	}
+	return nil
+}
+
+func extractParams(req *http.Request, mux *Mux) (bool, map[string]string) {
+	var ss = strings.Split(req.URL.Path, "/")
+	var params = make(map[string]string)
+	var r = mux.GetRequestRoute(req)
+
+	if r.Atts&REGEX != 0 {
+		for k, _ := range r.Compile {
+			params[r.Tag[k]] = ss[k]
+		}
+	}
+
+	for k, v := range r.Pattern {
+		params[v] = ss[k]
+	}
+	return true, params
 }
 
 // This function returns the route of given Request
-func (m *Mux) GetRequestRoute(req *http.Request) string {
+func (m *Mux) GetRequestRoute(req *http.Request) *Route {
 	cleanURL(&req.URL.Path)
 	for _, r := range m.Routes[req.Method] {
 		if r.Atts != 0 {
 			if r.Atts&SUB != 0 {
 				if len(req.URL.Path) >= r.Size {
 					if req.URL.Path[:r.Size] == r.Path {
-						return r.Path
+						return r
 					}
 				}
 			}
 			if r.Match(req) {
-				return r.Path
+				return r
 			}
 		}
 		if req.URL.Path == r.Path {
-			return r.Path
+			return r
 		}
 	}
 
 	for _, s := range m.Routes[static] {
 		if len(req.URL.Path) >= s.Size {
 			if req.URL.Path[:s.Size] == s.Path {
-				return s.Path
+				return s
 			}
 		}
 	}
 
-	return "NonFound"
+	return nil
 }
