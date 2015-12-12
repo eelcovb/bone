@@ -88,25 +88,25 @@ func cleanURL(url *string) {
 }
 
 // GetValue return the key value, of the current *http.Request
-func (m *Mux) GetValue(req *http.Request, key string) string {
-	if ok, value := extractParams(req, m); ok {
+func GetValue(req *http.Request, key string) string {
+	if ok, value := extractParams(req); ok {
 		return value[key]
 	}
 	return ""
 }
 
 // GetAllValues return the req PARAMs
-func (m *Mux) GetAllValues(req *http.Request) map[string]string {
-	if ok, values := extractParams(req, m); ok {
+func GetAllValues(req *http.Request) map[string]string {
+	if ok, values := extractParams(req); ok {
 		return values
 	}
 	return nil
 }
 
-func extractParams(req *http.Request, mux *Mux) (bool, map[string]string) {
+func extractParams(req *http.Request) (bool, map[string]string) {
 	var ss = strings.Split(req.URL.Path, "/")
 	var params = make(map[string]string)
-	var r = mux.GetRequestRoute(req)
+	var r = muxStack[req].GetRequestRoute(req)
 	if r != nil {
 		if r.Atts&REGEX != 0 {
 			for k, _ := range r.Compile {

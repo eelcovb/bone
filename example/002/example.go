@@ -26,7 +26,7 @@ func defaultHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func ShowVar(rw http.ResponseWriter, req *http.Request) {
-	value := mux.GetAllValues(req)
+	value := bone.GetAllValues(req)
 	fmt.Println(value)
 	//rw.Write([]byte(value))
 }

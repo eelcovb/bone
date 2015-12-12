@@ -9,6 +9,8 @@ package bone
 
 import "net/http"
 
+var muxStack = make(map[*http.Request]*Mux)
+
 // Mux have routes and a notFound handler
 // Route: all the registred route
 // notFound: 404 handler, default http.NotFound if not provided
@@ -36,6 +38,7 @@ func (m *Mux) Prefix(p string) *Mux {
 
 // Serve http request
 func (m *Mux) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	muxStack[req] = m
 	// Check if a route match
 	if !m.parse(rw, req) {
 		// Check if it's a static ressource

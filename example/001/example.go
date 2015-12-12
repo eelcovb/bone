@@ -34,8 +34,8 @@ func homeHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func varHandler(rw http.ResponseWriter, req *http.Request) {
-	varr := mux.GetValue(req, "var")
-	test := mux.GetValue(req, "test")
+	varr := bone.GetValue(req, "var")
+	test := bone.GetValue(req, "test")
 
 	rw.Write([]byte(varr + " " + test))
 }
