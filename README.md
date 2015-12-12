@@ -103,12 +103,14 @@ func main() {
 
 Example :
 ``` go
+var mux = bone.New()
+
 func main() {
     mux.GetFunc("/route/#var^[a-z]$", handler)
 }
 
 func handler(rw http.ResponseWriter, req *http.Request) {
-    bone.GetValue(req, "var")
+    mux.GetValue(req, "var")
 }
 ```
 
