@@ -15,9 +15,8 @@ func main() {
 	gorrilaSub := mux.NewRouter()
 	httprouterSub := httprouter.New()
 
-	boneSub.GetFunc("/test/:var", func(rw http.ResponseWriter, req *http.Request) {
-		val := muxx.GetValue(req, "var")
-		rw.Write([]byte(fmt.Sprintf("Hello %s from bone mux", val)))
+	boneSub.GetFunc("/test", func(rw http.ResponseWriter, req *http.Request) {
+		rw.Write([]byte("Hello from bone mux"))
 	})
 
 	gorrilaSub.HandleFunc("/test", func(rw http.ResponseWriter, req *http.Request) {
