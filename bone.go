@@ -49,6 +49,7 @@ func (m *Mux) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			}
 		}
 	}
+	delete(muxStack, req)
 }
 
 // Handle add a new route to the Mux without a HTTP method

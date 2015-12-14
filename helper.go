@@ -14,6 +14,10 @@ import (
 
 func (m *Mux) parse(rw http.ResponseWriter, req *http.Request) bool {
 	for _, r := range m.Routes[req.Method] {
+		if req.URL.Path == r.Path {
+			r.Handler.ServeHTTP(rw, req)
+			return true
+		}
 		if r.Atts != 0 {
 			if r.Atts&SUB != 0 {
 				if len(req.URL.Path) >= r.Size {
@@ -28,10 +32,6 @@ func (m *Mux) parse(rw http.ResponseWriter, req *http.Request) bool {
 				r.Handler.ServeHTTP(rw, req)
 				return true
 			}
-		}
-		if req.URL.Path == r.Path {
-			r.Handler.ServeHTTP(rw, req)
-			return true
 		}
 	}
 	return false
