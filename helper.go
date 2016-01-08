@@ -14,22 +14,16 @@ import (
 
 func (m *Mux) parse(rw http.ResponseWriter, req *http.Request) bool {
 	for _, r := range m.Routes[req.Method] {
-		if req.URL.Path == r.Path {
-			r.Handler.ServeHTTP(rw, req)
+		ok := r.parse(rw, req)
+		if ok {
 			return true
 		}
-		if r.Atts != 0 {
-			if r.Atts&SUB != 0 {
-				if len(req.URL.Path) >= r.Size {
-					if req.URL.Path[:r.Size] == r.Path {
-						req.URL.Path = req.URL.Path[r.Size:]
-						r.Handler.ServeHTTP(rw, req)
-						return true
-					}
-				}
-			}
-			if r.Match(req) {
-				r.Handler.ServeHTTP(rw, req)
+	}
+	// If no HEAD method, default to GET
+	if req.Method == "HEAD" {
+		for _, r := range m.Routes["GET"] {
+			ok := r.parse(rw, req)
+			if ok {
 				return true
 			}
 		}

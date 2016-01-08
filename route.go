@@ -110,6 +110,29 @@ func (r *Route) Match(req *http.Request) bool {
 	return false
 }
 
+func (r *Route) parse(rw http.ResponseWriter, req *http.Request) bool {
+	if r.Atts != 0 {
+		if r.Atts&SUB != 0 {
+			if len(req.URL.Path) >= r.Size {
+				if req.URL.Path[:r.Size] == r.Path {
+					req.URL.Path = req.URL.Path[r.Size:]
+					r.Handler.ServeHTTP(rw, req)
+					return true
+				}
+			}
+		}
+		if r.Match(req) {
+			r.Handler.ServeHTTP(rw, req)
+			return true
+		}
+	}
+	if req.URL.Path == r.Path {
+		r.Handler.ServeHTTP(rw, req)
+		return true
+	}
+	return false
+}
+
 func (r *Route) matchRawTokens(ss *[]string) bool {
 	if len(*ss) >= r.Token.Size {
 		for i, v := range r.Token.raw {

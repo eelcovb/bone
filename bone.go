@@ -7,7 +7,10 @@
 
 package bone
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
 
 var muxStack = make(map[*http.Request]*Mux)
 
@@ -32,7 +35,7 @@ func New() *Mux {
 
 // Prefix set a default prefix for all routes registred on the router
 func (m *Mux) Prefix(p string) *Mux {
-	m.prefix = p
+	m.prefix = strings.TrimSuffix(p, "/")
 	return m
 }
 
