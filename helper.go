@@ -7,7 +7,11 @@
 
 package bone
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/go-zoo/duck"
+)
 
 func (m *Mux) parse(rw http.ResponseWriter, req *http.Request) bool {
 	for _, r := range m.Routes[req.Method] {
@@ -97,34 +101,11 @@ func GetAllValues(req *http.Request) map[string]string {
 	return values
 }
 
-// This function returns the route of given Request
-func (m *Mux) GetRequestRoute(req *http.Request) string {
-	cleanURL(&req.URL.Path)
-	for _, r := range m.Routes[req.Method] {
-		if r.Atts != 0 {
-			if r.Atts&SUB != 0 {
-				if len(req.URL.Path) >= r.Size {
-					if req.URL.Path[:r.Size] == r.Path {
-						return r.Path
-					}
-				}
-			}
-			if r.Match(req) {
-				return r.Path
-			}
-		}
-		if req.URL.Path == r.Path {
-			return r.Path
-		}
+// GetRequestRoute returns the route of given Request
+func GetRequestRoute(req *http.Request) *Route {
+	rt := duck.GetContext(req, "route")
+	if rt != nil {
+		return rt.(*Route)
 	}
-
-	for _, s := range m.Routes[static] {
-		if len(req.URL.Path) >= s.Size {
-			if req.URL.Path[:s.Size] == s.Path {
-				return s.Path
-			}
-		}
-	}
-
-	return "NotFound"
+	return nil
 }
