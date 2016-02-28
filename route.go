@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/go-zoo/duck"
 )
 
 const (
@@ -116,21 +118,31 @@ func (r *Route) parse(rw http.ResponseWriter, req *http.Request) bool {
 			if len(req.URL.Path) >= r.Size {
 				if req.URL.Path[:r.Size] == r.Path {
 					req.URL.Path = req.URL.Path[r.Size:]
+					setContextReqRoute(req, r)
 					r.Handler.ServeHTTP(rw, req)
+					duck.DeleteContext(req, "route")
 					return true
 				}
 			}
 		}
 		if r.Match(req) {
+			setContextReqRoute(req, r)
 			r.Handler.ServeHTTP(rw, req)
+			duck.DeleteContext(req, "route")
 			return true
 		}
 	}
 	if req.URL.Path == r.Path {
+		setContextReqRoute(req, r)
 		r.Handler.ServeHTTP(rw, req)
+		duck.DeleteContext(req, "route")
 		return true
 	}
 	return false
+}
+
+func setContextReqRoute(req *http.Request, r *Route) {
+	duck.SetContext(req, "route", r)
 }
 
 func (r *Route) matchRawTokens(ss *[]string) bool {

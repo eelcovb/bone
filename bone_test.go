@@ -412,3 +412,26 @@ func TestSlashRemoving(t *testing.T) {
 		t.Error("Slash removing doesn't work !")
 	}
 }
+
+func TestGetReqHandler(t *testing.T) {
+	valid := false
+	mux := New()
+	mux.GetFunc("/test", func(rw http.ResponseWriter, req *http.Request) {
+		ctxRoute := GetRequestRoute(req)
+		t.Log(ctxRoute)
+		if ctxRoute != nil {
+			if ctxRoute.Path == "/test" {
+				valid = true
+			}
+		}
+	})
+
+	req, _ := http.NewRequest("GET", "/test", nil)
+	rw := httptest.NewRecorder()
+
+	mux.ServeHTTP(rw, req)
+
+	if !valid {
+		t.Fail()
+	}
+}

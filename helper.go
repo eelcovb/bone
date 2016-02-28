@@ -10,6 +10,8 @@ package bone
 import (
 	"net/http"
 	"strings"
+
+	"github.com/go-zoo/duck"
 )
 
 func (m *Mux) parse(rw http.ResponseWriter, req *http.Request) bool {
@@ -100,10 +102,10 @@ func GetAllValues(req *http.Request) map[string]string {
 func extractParams(req *http.Request) (bool, map[string]string) {
 	var ss = strings.Split(req.URL.Path, "/")
 	var params = make(map[string]string)
-	var r = muxStack[req].GetRequestRoute(req)
+	var r = GetRequestRoute(req)
 	if r != nil {
 		if r.Atts&REGEX != 0 {
-			for k, _ := range r.Compile {
+			for k := range r.Compile {
 				params[r.Tag[k]] = ss[k]
 			}
 		}
@@ -117,34 +119,11 @@ func extractParams(req *http.Request) (bool, map[string]string) {
 	return false, nil
 }
 
-// This function returns the route of given Request
-func (m *Mux) GetRequestRoute(req *http.Request) *Route {
-	cleanURL(&req.URL.Path)
-	for _, r := range m.Routes[req.Method] {
-		if r.Atts != 0 {
-			if r.Atts&SUB != 0 {
-				if len(req.URL.Path) >= r.Size {
-					if req.URL.Path[:r.Size] == r.Path {
-						return r
-					}
-				}
-			}
-			if r.Match(req) {
-				return r
-			}
-		}
-		if req.URL.Path == r.Path {
-			return r
-		}
+// GetRequestRoute returns the route of given Request
+func GetRequestRoute(req *http.Request) *Route {
+	rt := duck.GetContext(req, "route")
+	if rt != nil {
+		return rt.(*Route)
 	}
-
-	for _, s := range m.Routes[static] {
-		if len(req.URL.Path) >= s.Size {
-			if req.URL.Path[:s.Size] == s.Path {
-				return s
-			}
-		}
-	}
-
 	return nil
 }
