@@ -10,9 +10,8 @@ package bone
 import (
 	"net/http"
 	"strings"
+	"sync"
 )
-
-var muxStack = make(map[*http.Request]*Mux)
 
 // Mux have routes and a notFound handler
 // Route: all the registred route
@@ -23,9 +22,15 @@ type Mux struct {
 	notFound http.Handler
 }
 
+type reqStack struct {
+	sync.RWMutex
+	stack map[*http.Request]*Mux
+}
+
 var (
-	static = "static"
-	method = []string{"GET", "POST", "PUT", "DELETE", "HEAD", "PATCH", "OPTIONS"}
+	static   = "static"
+	muxStack = reqStack{stack: make(map[*http.Request]*Mux)}
+	method   = []string{"GET", "POST", "PUT", "DELETE", "HEAD", "PATCH", "OPTIONS"}
 )
 
 // New create a pointer to a Mux instance
@@ -41,7 +46,9 @@ func (m *Mux) Prefix(p string) *Mux {
 
 // Serve http request
 func (m *Mux) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	muxStack[req] = m
+	muxStack.Lock()
+	muxStack.stack[req] = m
+	muxStack.Unlock()
 	// Check if a route match
 	if !m.parse(rw, req) {
 		// Check if it's a static ressource
@@ -52,7 +59,9 @@ func (m *Mux) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			}
 		}
 	}
-	delete(muxStack, req)
+	muxStack.Lock()
+	delete(muxStack.stack, req)
+	muxStack.Unlock()
 }
 
 // Handle add a new route to the Mux without a HTTP method
